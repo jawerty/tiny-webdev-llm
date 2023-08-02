@@ -1,0 +1,15 @@
+{
+  "name": "tiny-web-dev",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@minify-html/node": "^0.11.1",
+    "puppeteer": "^20.9.0"
+  }
+}
