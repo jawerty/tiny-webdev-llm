@@ -1,4 +1,4 @@
-# tiny-webdev-llm
+# tiny-webdev-llm (ongoing)
 Smallest LLM I can fine tune for coding websites
 
 I'll be live coding the tiniest Web Dev LLM I can build. 
@@ -14,7 +14,28 @@ Next I’m going to build a “semantic” css framework on top of it to compres
 
 In the first video I build the web crawler, style embedder, get a v0 dataset and fine tune Llama with Lora. Next video I want to actually get it working well and designing websites for us.
 
-# How to build a dataset
+# The Dataset
+The dataset is comprised of a series of prompts with these prefixes
+```
+[TINY-WEB-DEV-TITLE]
+
+...insert title of webpage...
+
+[TINY-WEB-DEV-CODE]
+
+...insert compressed and style embedded html...
+
+```
+
+In the future we will replace the title with a proper label and description of the webpage likely from a huggingface inference API request to a Llama 2 variant. 
+
+# How to scrape the dataset
+Fill the seeds.txt with urls you want to start crawling from
+
+For now run the website-crawler.js to build the dataset
+```
+node website-crawler.js
+```
 
 # How to train
 Here's a link to the [colab](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing). Upload a dataset to a dataset.json file 
