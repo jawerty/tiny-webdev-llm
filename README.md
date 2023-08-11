@@ -29,15 +29,43 @@ The dataset is comprised of a series of prompts with these prefixes
 
 In the future we will replace the title with a proper label and description of the webpage likely from a huggingface inference API request to a Llama 2 variant. 
 
-# How to scrape the dataset
+# How to build the dataset
+
+## Part 1 - Fetching the html page snapshots
 Fill the seeds.txt with urls you want to start crawling from
 
-For now run the website-crawler.js to build the dataset
+Then run the website crawler to get embedded styled webpages (cleaning the dataset is optional)
 ```
-node website-crawler.js
+$ node website-crawler.js
+$ node clean-dataset.js
 ```
 
-# How to train
-Here's a link to the [colab](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing). Upload a dataset to a dataset.json file 
+## Part 2 - Generating the semantic css framework
+Generate a "semantic" css framework for the dataset. 
+
+The reason for this is so we can 1. Compress our dataset (to approximately 8th the size of the original embeeded style dataset) and 2. create semantic tokens based on the 'topic' the css classes show up in (based on the text of html page)
+
+First run the routine to cluster the html pages in the dataset and generate topics for each of them 
+```
+$ python3 topic-generator.py
+```
+
+Then once you run the topic generator generate the css framework (the topics will be used to name the css classes)
+```
+$ node generate-css-framework.js
+```
+
+This command will output a `semantic-css-framework.css` file you will use as the the css framework when you want to load your generated html pages
+
+## Part 3 - Converting the dataset to use semantic css
+Run the conversion script to convert the embedded styles to use the generated semantic css classes
+```
+$ node convert-dataset-to-semantic-framework.js
+```
+
+# How to train (TBD)
+So far the last piece is to properly label the html files. Will likely use a LLama model to label in the colab. This part is a work in progress. You can also use label the final dataset however you want.
+
+Here's a link to the training [colab](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing). Upload the dataset to a dataset.json file 
 
 Colab link -> [https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing)
