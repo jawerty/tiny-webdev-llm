@@ -1,1 +1,7 @@
-https://www.google.com/search?q=best+sign+up+page+examples&client=firefox-b-1-d&channel=fen&sxsrf=AB5stBgeh75uWvXKQXgAjTYvXT98JJRQmw%3A1690953441784&ei=4ebJZLj1LqDIptQPxrSakAk&ved=0ahUKEwj46em5nL2AAxUgpIkEHUaaBpIQ4dUDCA8&uact=5&oq=best+sign+up+page+examples&gs_lp=Egxnd3Mtd2l6LXNlcnAiGmJlc3Qgc2lnbiB1cCBwYWdlIGV4YW1wbGVzMgUQABiABDIIEAAYigUYhgMyCBAAGIoFGIYDMggQABiKBRiGAzIIEAAYigUYhgNI5BJQ-glYwRBwAngBkAEAmAFloAHiBKoBAzYuMbgBA8gBAPgBAcICChAAGEcY1gQYsAPCAhAQLhiKBRjHARjRAxiwAxhDwgIKEAAYigUYsAMYQ8ICFhAuGIoFGMcBGNEDGMgDGLADGEPYAQHCAggQIRigARjDBMICBxAAGA0YgATiAwQYACBBiAYBkAYRugYGCAEQARgI&sclient=gws-wiz-serp
+https://www.w3schools.com/w3css/tryw3css_templates_band.htm
+https://getbootstrap.com/docs/4.0/examples/starter-template/
+https://getbootstrap.com/docs/4.0/getting-started/introduction/https://getbootstrap.com/docs/4.0/examples/
+https://getbootstrap.com/docs/4.0/examples/navbar-static/
+https://getbootstrap.com/docs/4.0/examples/cover/
+https://getbootstrap.com/docs/4.0/examples/carousel/
+https://getbootstrap.com/docs/4.0/examples/album/

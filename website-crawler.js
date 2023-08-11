@@ -4,7 +4,7 @@ const minifyHtml = require("@minify-html/node");
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
-const dataset = JSON.parse(fs.readFileSync('./dataset.json', "utf-8"))
+const dataset = JSON.parse(fs.readFileSync('./dataset-0.json', "utf-8"))
 
 const controlStyles = JSON.parse(fs.readFileSync('./control-styles-dictionary.json', 'utf-8'))
 
@@ -158,6 +158,13 @@ function buildPrompt(labelInfo, finalHTML) {
 	return `[TINY-WEB-DEV-TITLE]\n${labelInfo}\n[TINY-WEB-DEV-CODE]\n${finalHTML}`
 }
 
+
+async function getMetadataText(page) {
+	return await page.evaluate(() => {
+		return document.body.innerText.trim()
+	})
+}
+
 async function generatePrompt(page) {
 	const result = await embedStyles(page);
 	if (result === "STOP") {
@@ -172,6 +179,22 @@ async function generatePrompt(page) {
 
 	const prompt = await buildPrompt(labelInfo, finalHTML)
 	return prompt
+}
+
+async function getDatasetItem(page) {
+	const result = await embedStyles(page);
+	if (result === "STOP") {
+		return false
+	}
+	const html = await getThePageHTML(page);
+	// console.log(finalHTML);
+	const finalHTML = minifyHtml.minify(Buffer.from(html), { keep_closing_tags: true })
+	
+	// changing this
+	const metadataText = await getMetadataText(page)
+
+	const datasetItem = { metadata: metadataText, html: finalHTML }
+	return datasetItem
 }
 
 function getOutboundLinks(page) {
@@ -202,10 +225,12 @@ async function run() {
 		await page.goto(website)
 		urlLog.push(website.split("?")[0]);
 		// 1 get current page dataset promp
-		let prompt;
+		let datasetItem;
 		try {
-			prompt = await generatePrompt(page)
-			if (!prompt) {
+			// datasetItem = await generatePrompt(page)
+			datasetItem = await getDatasetItem(page)
+
+			if (!datasetItem) {
 				console.log("CONTROL ELEMENT MAX ERROR")
 				console.log("Just keep going")
 				continue
@@ -217,9 +242,9 @@ async function run() {
 		}
 
 
-		dataset.push(prompt)
+		dataset.push(datasetItem)
 
-		fs.writeFileSync("./dataset.json", JSON.stringify(dataset))
+		fs.writeFileSync("./dataset-0.json", JSON.stringify(dataset))
 
 		// get outbound links
 		const outboundLinks = await getOutboundLinks(page)
@@ -229,13 +254,13 @@ async function run() {
 				if (urlLog.indexOf(website.split("?")[0]) > -1) {
 					return false
 				}
-				return parsedUrl.origin.indexOf("youtube.com") === -1 && parsedUrl.origin.indexOf("linkedin.com") === -1
+				return parsedUrl.origin.indexOf("instagram.com") === -1 && parsedUrl.origin.indexOf("stackoverflow.com") === -1 && parsedUrl.origin.indexOf("twitter.com") === -1 && parsedUrl.origin.indexOf("youtube.com") === -1 && parsedUrl.origin.indexOf("linkedin.com") === -1 && parsedUrl.origin.indexOf("icann.org") === -1 && parsedUrl.origin.indexOf("iana.org") === -1
 			})
 		}
 	}
 
 
-	fs.writeFileSync("./dataset.json", JSON.stringify(dataset), "utf-8");
+	fs.writeFileSync("./dataset-0.json", JSON.stringify(dataset), "utf-8");
 }
 
 run()

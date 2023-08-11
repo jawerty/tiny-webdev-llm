@@ -1,2 +1,4 @@
 node_modules
 dataset.json
+*dataset.json
+*dataset-0.json
