@@ -193,7 +193,9 @@ async function getDatasetItem(page) {
 	// changing this
 	const metadataText = await getMetadataText(page)
 
-	const datasetItem = { metadata: metadataText, html: finalHTML }
+	// temporary label for now
+	const label = await getTheLabelInfo(page)
+	const datasetItem = { label, metadata: metadataText, html: finalHTML }
 	return datasetItem
 }
 

@@ -61,11 +61,15 @@ This command will output a `semantic-css-framework.css` file you will use as the
 Run the conversion script to convert the embedded styles to use the generated semantic css classes
 ```
 $ node convert-dataset-to-semantic-framework.js
+$ node dataset-to-prompts.js
 ```
+You will in the end have a `final-dataset.json` with your prompts for fine-tuning.
 
-# How to train (TBD)
-So far the last piece is to properly label the html files. Will likely use a LLama model to label in the colab. This part is a work in progress. You can also use label the final dataset however you want.
+# How to fine-tune a model with your dataset
+Quickly, I want to address the labeling. We need proper labeling for each html file for prompting. This is so we can have a proper question for inference. For instance `a website for a photography website`. We are currently using the titles of the webpages which is very flawed `see website-crawler.js`. You can also manually label these in your semantic-css-dataset.json file before running `node dataset-to-prompts.js`. 
 
-Here's a link to the training [colab](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing). Upload the dataset to a dataset.json file 
+More on how to fine-tune. 
+
+Here's a link to the training [colab](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing). Upload the `final-dataset.json` to the dataset.json file 
 
 Colab link -> [https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing](https://colab.research.google.com/drive/1x1paWIa-HbTezYsm0a5cG1eNguKZMiI5?usp=sharing)
