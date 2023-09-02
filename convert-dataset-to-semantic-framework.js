@@ -71,7 +71,7 @@ async function main() {
 
 	dataset = dataset.map((datasetItem, i) => {
 		console.log(i, "/", dataset.length)
-		const $ = cheerio.load(Buffer.from(datasetItem['html'].data).toString())
+		const $ = cheerio.load(datasetItem['html'])
 
 		Array.from($("*")).forEach((element) => {
 			if (!$(element).attr('style')) return

@@ -86,7 +86,7 @@ async function run() {
 
 	const topicMapping = {}
 	for (let datasetItem of dataset) {
-		const $ = cheerio.load(Buffer.from(datasetItem['html'].data).toString())
+		const $ = cheerio.load(datasetItem['html'])
 
 		Array.from($("*")).forEach((element) => {
 			if (!$(element).attr('style')) return

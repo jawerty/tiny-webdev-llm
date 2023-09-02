@@ -5,7 +5,7 @@ const dataset = JSON.parse(fs.readFileSync('./dataset-0.json'))
 async function run() {
 	console.log("DATASET SIZE:", dataset.length)
 	const cleanedDataset = dataset.filter((item) => {
-		const htmlString = Buffer.from(item.html.data).toString();
+		const htmlString = item.html
 		return htmlString.split(" ").length < 52000;
 	})
 	console.log("CLEANED DATASET SIZE:", cleanedDataset.length)

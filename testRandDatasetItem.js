@@ -9,7 +9,7 @@ function run() {
 
 	// saving pre semantic css
 	const randItemPre = preSemanticCssDataset[randItemIndex]
-	let $ = cheerio.load(Buffer.from(randItemPre['html'].data).toString())
+	let $ = cheerio.load(randItemPre['html'])
 	cleaner.clean($.html(), (output) => {
 		fs.writeFileSync("./pre-semantic-test.html", output)
 	})
