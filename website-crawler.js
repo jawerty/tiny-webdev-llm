@@ -10,14 +10,19 @@ const controlStyles = JSON.parse(fs.readFileSync('./control-styles-dictionary.js
 
 const urlLog = [];
 
+const domainMaxes = {}
+
+// don't go to this domain more than this
+const domainLimit = 10
+
 // How far to go from the seeds  
 const maxSeedDepth = 5;
 
 // how many outboundLinks to get per website
-const outboundLinkLimit = 5;
+const outboundLinkLimit = 7;
 
 // skip elements with this size 
-const elementCountLimit = 1000;
+const elementCountLimit = 750;
 
 function timeout(miliseconds) {
 	return new Promise((resolve) => {
@@ -248,6 +253,12 @@ async function run() {
 	while (websitesToCrawl.length > 0) {
 		console.log(websitesToCrawl);
 		const website = websitesToCrawl.pop();
+		const urlObj = new URL(website)
+		if (domainMaxes[urlObj.host] && domainMaxes[urlObj.host] > domainLimit) {
+			console.log("Domain limit skipping", website)
+			continue
+		}
+
 		console.log("Crawling", website)
 
 		try {
@@ -255,6 +266,13 @@ async function run() {
 		} catch(e) {
 			console.log("GOTO FAILED FOR", website)
 			continue
+		}
+
+		// index the website in domain maxes
+		if (urlObj.host in domainMaxes) {
+			domainMaxes[urlObj.host] += 1
+		} else {
+			domainMaxes[urlObj.host] = 1
 		}
 
 		const elementCount = await page.evaluate(() => {
@@ -332,6 +350,10 @@ async function run() {
 					if (parsedUrl.origin.indexOf(origin) > -1) {
 						return false
 					}
+				}
+
+				if (domainMaxes[parsedUrl.host] && domainMaxes[parsedUrl.host] >= domainLimit) {
+					return false
 				}
 
 				return true

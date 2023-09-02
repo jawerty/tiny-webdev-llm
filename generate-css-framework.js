@@ -3,15 +3,15 @@ const cheerio = require("cheerio");
 
 const dataset = JSON.parse(fs.readFileSync("./topic_dataset.json", "utf-8"))
 
-
+// limit css class size
 const maxClassSize = 10;
+// percentile of top occurrences to filter for common css classes
 const percentileThreshold = 50;
-const classStringSize = 6;
+const classStringSize = 5;
 // for testing
-const styleLimit = 1000
+const styleLimit = 1500
 
 // if you build it they will come
-
 async function run() {
 	let occurrenceMap = new Map()
 
@@ -26,30 +26,30 @@ async function run() {
 
 	const createFramework = (topicName) => {
 		// get top 10% of classes to add to framework
-		let maxOccurrence = 0;
-		let minOccurrence = 0; // probably going to be 1
-		occurrenceMap.forEach((val) => {
-			// initialize min occurrence
-			if (minOccurrence === 0) {
-				minOccurrence = val
-			}
-			if (maxOccurrence < val) {
-				maxOccurrence = val
-			}
-			if (minOccurrence > val) {
-				minOccurrence = val
-			}
+		const occurrences = Array.from(occurrenceMap.values())
+		const sortedValues = occurrences.sort((a, b) => {
+			return b - a
+		});
+
+		let occurrencesSum = 0
+		occurrences.forEach((occurrence) => {
+			occurrencesSum += occurrence
 		})
 
-		const percentile = 100 - percentileThreshold;
+		let maxOccurrence = sortedValues[0];
+		let minOccurrence = sortedValues[occurrences.length - 1]; // probably going to be 1
+		let median = sortedValues[Math.round(occurrences.length/2)]
+		const percentile = (100 - percentileThreshold)/100;
 		// simple proportion
-		const threshold = ((maxOccurrence-minOccurrence) * percentile)/100
+		const threshold = minOccurrence + ((maxOccurrence-minOccurrence) * percentile)
+		
 		console.log("Min: ", minOccurrence)
 		console.log("Max: ", maxOccurrence)
-		console.log("Percentile: ", percentile)
-		console.log("Threshold: ", threshold)
+		console.log("Median:", median)
+		console.log("Mean:", occurrencesSum/occurrences.length)
+		console.log(`Percentile ${percentileThreshold}% Threshold:`, threshold)
+		
 		const framework = {};
-
 		Array.from(occurrenceMap.keys()).filter((comboHash) => {
 			return occurrenceMap.get(comboHash) >= threshold
 		}).forEach((comboHash) => {

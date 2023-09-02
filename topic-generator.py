@@ -4,8 +4,9 @@ from top2vec import Top2Vec
 from sklearn.datasets import fetch_20newsgroups
 
 class TopicGenerator:
-	def __init__(self, documents=[]):
+	def __init__(self, documents=[], doc_multiplier=2):
 		self.documents = documents
+		self.doc_multiplier = 1
 
 	def load_documents(self, filename):
 		f = open(filename)
@@ -18,7 +19,7 @@ class TopicGenerator:
 		return self.documents
 
 	def train_model(self):
-		self.model = Top2Vec(documents=self.documents*10, speed="learn", workers=1)
+		self.model = Top2Vec(documents=self.documents*self.doc_multiplier, speed="deep-learn", workers=1)
 		print("Topic Count:", self.model.get_num_topics())
 		return self.model
 
@@ -31,14 +32,16 @@ class TopicGenerator:
 		topic_words, word_scores, topic_nums = self.model.get_topics()
 		topic_names = [x[0] for x in topic_words]
 
-		print("topic_words", topic_words)
-		print("word_scores", word_scores)
-		print("topic_nums", topic_nums)
+		# print("topic_words", topic_words)
+		# print("word_scores", word_scores)
+		# print("topic_nums", topic_nums)
 
 		for topic_id in topic_nums:
 			documents, document_scores, document_ids = self.model.search_documents_by_topic(topic_num=topic_id, num_docs=topic_sizes[topic_id])
 			
-			# print(documents, document_ids, document_scores)
+			print(f"Topic \"{topic_names[topic_id]}\"")
+			print("Documents Count:", len(document_ids))
+			print(document_ids)
 			for i, doc_id in enumerate(document_ids):
 				if doc_id in doc_id_score_map:
 					curr_score = doc_id_score_map[doc_id]["score"]
@@ -52,8 +55,8 @@ class TopicGenerator:
 					}
 
 
-		self.doc_id_topic_map = {} 
-		for i in range(0, 10):
+		self.doc_id_topic_map = {}
+		for i in doc_id_score_map:
 			self.doc_id_topic_map[i] = doc_id_score_map[i]["topic_name"]
 
 		print("Topic map:", self.doc_id_topic_map)
@@ -64,10 +67,9 @@ class TopicGenerator:
 		self.documents = data
 
 		for i in self.doc_id_topic_map:
-			# print(i, self.doc_id_topic_map[i])
+			# print(self.documents[i])
 			# print(self.documents[i])
 			self.documents[i]["topic"] = self.doc_id_topic_map[i]
-			print(self.documents[i]["topic"])
 
 		with open("./topic_dataset.json", 'w+') as f:
 			json.dump(self.documents, f)
