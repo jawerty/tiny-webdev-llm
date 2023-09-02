@@ -61,7 +61,7 @@ class TopicGenerator:
 		for i in range(0, 10):
 			self.doc_id_topic_map[i] = doc_id_score_map[i]["topic_name"]
 
-		print(self.doc_id_topic_map)
+		print("Topic map:", self.doc_id_topic_map)
 
 	def save_topic_to_docs(self, input_dataset):
 		f = open(input_dataset)
@@ -69,8 +69,8 @@ class TopicGenerator:
 		self.documents = data
 
 		for i in self.doc_id_topic_map:
-			print(i, self.doc_id_topic_map[i])
-			print(self.documents[i])
+			# print(i, self.doc_id_topic_map[i])
+			# print(self.documents[i])
 			self.documents[i]["topic"] = self.doc_id_topic_map[i]
 			print(self.documents[i]["topic"])
 

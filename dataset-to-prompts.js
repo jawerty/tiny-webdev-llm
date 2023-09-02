@@ -11,6 +11,7 @@ dataset = [
 	....
 ]
 */
+
 const dataset = JSON.parse(fs.readFileSync('./semantic-css-dataset.json'))
 
 async function run() {

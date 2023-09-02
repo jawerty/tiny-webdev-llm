@@ -33,13 +33,17 @@ const loadCSSAsJson = () => {
 // ]
 async function main() {
 	const cssFramework = loadCSSAsJson()
+	const cssFrameworkKeysSorted = Object.keys(cssFramework).sort((a, b) => {
+		return cssFramework[b].length - cssFramework[a].length
+	})
+
 	console.log(cssFramework)
 
 	// framework-izing each element
 	const compressWithCssFramework = (styleArray) => {
 		// first match compress
 		const listOfClasses = [];
-		for (let cssClassName of Object.keys(cssFramework)) {
+		for (let cssClassName of cssFrameworkKeysSorted) {
 			// array of styles
 			const cssClass = cssFramework[cssClassName]
 
@@ -56,7 +60,7 @@ async function main() {
 			if (isMatch) {
 				// removing the class from the styleArry
 				for (let style of cssClass) {
-					styleArray.splice(styleArray.indexOf(style) > -1, 1)
+					styleArray.splice(styleArray.indexOf(style), 1)
 				}
 				listOfClasses.push(cssClassName)
 			}
@@ -65,7 +69,8 @@ async function main() {
 		return [listOfClasses, styleArray]
 	}
 
-	dataset = dataset.map((datasetItem) => {
+	dataset = dataset.map((datasetItem, i) => {
+		console.log(i, "/", dataset.length)
 		const $ = cheerio.load(Buffer.from(datasetItem['html'].data).toString())
 
 		Array.from($("*")).forEach((element) => {
@@ -87,9 +92,9 @@ async function main() {
 		datasetItem['html'] = $.html();
 		return datasetItem
 	});
-
 	fs.writeFileSync("./semantic-css-dataset.json", JSON.stringify(dataset, null, 2))
-	return true;
+	console.log("Finished!")
+	process.exit(0)
 }
 
 main()

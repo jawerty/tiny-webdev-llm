@@ -1,6 +1,11 @@
+https://github.com/mozilla/DeepSpeech
+https://justask.codes/
+https://news.ycombinator.com/news
+https://search.brave.com/search?q=simple+html+websites&source=desktop
 https://www.w3schools.com/w3css/tryw3css_templates_band.htm
 https://getbootstrap.com/docs/4.0/examples/starter-template/
-https://getbootstrap.com/docs/4.0/getting-started/introduction/https://getbootstrap.com/docs/4.0/examples/
+https://getbootstrap.com/docs/4.0/getting-started/introduction/
+https://getbootstrap.com/docs/4.0/examples/
 https://getbootstrap.com/docs/4.0/examples/navbar-static/
 https://getbootstrap.com/docs/4.0/examples/cover/
 https://getbootstrap.com/docs/4.0/examples/carousel/

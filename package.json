@@ -11,6 +11,8 @@
   "dependencies": {
     "@minify-html/node": "^0.11.1",
     "cheerio": "^1.0.0-rc.12",
+    "clean-html": "^2.0.1",
+    "html-prettify": "^1.0.7",
     "puppeteer": "^21.0.1"
   }
 }

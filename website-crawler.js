@@ -10,6 +10,15 @@ const controlStyles = JSON.parse(fs.readFileSync('./control-styles-dictionary.js
 
 const urlLog = [];
 
+// How far to go from the seeds  
+const maxSeedDepth = 5;
+
+// how many outboundLinks to get per website
+const outboundLinkLimit = 5;
+
+// skip elements with this size 
+const elementCountLimit = 1000;
+
 function timeout(miliseconds) {
 	return new Promise((resolve) => {
 		setTimeout(() => {resolve()}, miliseconds)
@@ -42,7 +51,7 @@ const setupBrowser = async () => {
 
 async function embedStyles(page) {
 	await page.evaluate((controlStyles) => {
-		let controlElementsCount = 50;
+		let controlElementsCount = 25;
 		let controlElementsIndex = 0;
 		window.controlStyles = controlStyles;
 		window.embedHTML = (element, root) => {
@@ -52,7 +61,6 @@ async function embedStyles(page) {
 				}
 				const unstylableElement = ['svg', 'SCRIPT', 'NOSCRIPT', 'STYLE'].includes(element.tagName)
 				if (!unstylableElement) {
-					
 					let styles = []
 					try {
 						const targetDOMElement = element;
@@ -62,7 +70,7 @@ async function embedStyles(page) {
 
 						let tempCopyOfTarget
 						if (!controlElementsCSS) {
-							console.log("control element")
+							console.log("element not in control css", controlElementsIndex, "/", controlElementsCount)
 							if (controlElementsCount >= controlElementsIndex) {
 								return "STOP" 
 							}
@@ -121,12 +129,12 @@ async function embedStyles(page) {
 	}, controlStyles)
 }
 
-async function getThePageHTML(page) {
-
+async function cleanHTML(page) {
 	return await page.evaluate(() => {
 		// clean the html
 		// clean attributes
 		function cleanHTML(element) {
+
 			element.removeAttribute('class')
 			element.removeAttribute('id')
 			const attrsToDelete = Array.from(element.classList).filter((_class) => {
@@ -143,7 +151,21 @@ async function getThePageHTML(page) {
 					}
 				}
 			}
+
 		}
+
+		// clean html
+		Array.from(document.querySelectorAll("script")).forEach((el) => {
+			el.remove();
+		})
+		Array.from(document.querySelectorAll("style")).forEach((el) => {
+			el.remove();
+		})
+		Array.from(document.querySelectorAll("link")).forEach((el) => {
+			el.remove();
+		})
+		cleanHTML(document.body)
+
 		return document.body.outerHTML
 	});
 }
@@ -170,7 +192,7 @@ async function generatePrompt(page) {
 	if (result === "STOP") {
 		return false
 	}
-	const html = await getThePageHTML(page);
+	const html = await cleanHTML(page);
 	// console.log(finalHTML);
 	const finalHTML = minifyHtml.minify(Buffer.from(html), { keep_closing_tags: true })
 	
@@ -186,7 +208,8 @@ async function getDatasetItem(page) {
 	if (result === "STOP") {
 		return false
 	}
-	const html = await getThePageHTML(page);
+	const html = await cleanHTML(page);
+
 	// console.log(finalHTML);
 	const finalHTML = minifyHtml.minify(Buffer.from(html), { keep_closing_tags: true })
 	
@@ -195,7 +218,7 @@ async function getDatasetItem(page) {
 
 	// temporary label for now
 	const label = await getTheLabelInfo(page)
-	const datasetItem = { label, metadata: metadataText, html: finalHTML }
+	const datasetItem = { label, metadata: metadataText, html: Buffer.from(finalHTML).toString() }
 	return datasetItem
 }
 
@@ -219,23 +242,38 @@ async function run() {
 
 	const [browser, page] = await setupBrowser();
 
-	let websitesToCrawl = seeds
+	let websitesToCrawl = seeds;
+
+	let seedDepthIndex = 0;
 	while (websitesToCrawl.length > 0) {
+		console.log(websitesToCrawl);
 		const website = websitesToCrawl.pop();
 		console.log("Crawling", website)
 
-		await page.goto(website)
+		try {
+			await page.goto(website)
+		} catch(e) {
+			console.log("GOTO FAILED FOR", website)
+			continue
+		}
+
+		const elementCount = await page.evaluate(() => {
+			return document.querySelectorAll("*").length	
+		})
+		console.log("Element count:", elementCount);
+		if (elementCount > elementCountLimit) {
+			console.log("Website too large, skipping")
+			continue;
+		}
 		urlLog.push(website.split("?")[0]);
 		// 1 get current page dataset promp
 		let datasetItem;
 		try {
-			// datasetItem = await generatePrompt(page)
 			datasetItem = await getDatasetItem(page)
-
 			if (!datasetItem) {
 				console.log("CONTROL ELEMENT MAX ERROR")
 				console.log("Just keep going")
-				continue
+				continue;
 			}
 		} catch (e) {
 			console.log(e)
@@ -247,22 +285,71 @@ async function run() {
 		dataset.push(datasetItem)
 
 		fs.writeFileSync("./dataset-0.json", JSON.stringify(dataset))
+		if (seedDepthIndex == maxSeedDepth) {
+			// dont look at outpound links of the seed depth is past the max 
+			seedDepthIndex = 0;
+			continue
+		}
 
 		// get outbound links
 		const outboundLinks = await getOutboundLinks(page)
 		if (outboundLinks.length > 0) {
-			websitesToCrawl = websitesToCrawl.concat(outboundLinks).filter((website) => {
+			const newSitesToCrawl = outboundLinks.filter((website) => {
 				const parsedUrl = new URL(website);
+
 				if (urlLog.indexOf(website.split("?")[0]) > -1) {
 					return false
 				}
-				return parsedUrl.origin.indexOf("instagram.com") === -1 && parsedUrl.origin.indexOf("stackoverflow.com") === -1 && parsedUrl.origin.indexOf("twitter.com") === -1 && parsedUrl.origin.indexOf("youtube.com") === -1 && parsedUrl.origin.indexOf("linkedin.com") === -1 && parsedUrl.origin.indexOf("icann.org") === -1 && parsedUrl.origin.indexOf("iana.org") === -1
-			})
+
+				const pathnameSplit = parsedUrl.pathname.split(".")
+				const flaggedFileTypes = [
+					"pdf",
+					"jpg",
+					"jpeg",
+					"gif",
+					"png",
+					"zip"
+				];
+
+				for (let fileType of flaggedFileTypes) {
+					if (pathnameSplit[pathnameSplit.length-1].indexOf(fileType) > -1) {
+						return false
+					}
+				}
+
+				// filter flagged origins
+				const flaggedOrigins = [
+					"instagram.com", 
+					"stackoverflow.com",
+					"twitter.com",
+					"youtube.com",
+					"linkedin.com",
+					"icann.org",
+					"iana.org"
+				];
+
+				for (let origin of flaggedOrigins) {
+					if (parsedUrl.origin.indexOf(origin) > -1) {
+						return false
+					}
+				}
+
+				return true
+			}).slice(0,outboundLinkLimit); // only get n outbound links
+			
+			seedDepthIndex++;
+			// site to be popped off next time
+			if (newSitesToCrawl.length > 0) {
+				websitesToCrawl = websitesToCrawl.concat(newSitesToCrawl)
+			}
 		}
+
 	}
 
-
+	console.log("\n\n------Finished crawling------\n\n")
+	console.log(`STATS:\ndataset size: ${dataset.length}`)
 	fs.writeFileSync("./dataset-0.json", JSON.stringify(dataset), "utf-8");
+	return true
 }
 
 run()

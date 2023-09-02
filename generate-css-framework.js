@@ -8,11 +8,13 @@ const maxClassSize = 10;
 const percentileThreshold = 50;
 const classStringSize = 6;
 // for testing
-const styleLimit = null
+const styleLimit = 1000
 
 // if you build it they will come
 
 async function run() {
+	let occurrenceMap = new Map()
+
 	const randStr = (n) => {
 		const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWYZ1234567890"
 		let newStr = ''
@@ -22,22 +24,22 @@ async function run() {
 		return newStr
 	}
 
-	const createFramework = (topicName, occurrenceMap) => {
+	const createFramework = (topicName) => {
 		// get top 10% of classes to add to framework
 		let maxOccurrence = 0;
 		let minOccurrence = 0; // probably going to be 1
-		for (let comboHash in occurrenceMap) {
+		occurrenceMap.forEach((val) => {
 			// initialize min occurrence
 			if (minOccurrence === 0) {
-				minOccurrence = occurrenceMap[comboHash]
+				minOccurrence = val
 			}
-			if (maxOccurrence < occurrenceMap[comboHash]) {
-				maxOccurrence = occurrenceMap[comboHash]
+			if (maxOccurrence < val) {
+				maxOccurrence = val
 			}
-			if (minOccurrence > occurrenceMap[comboHash]) {
-				minOccurrence = occurrenceMap[comboHash]
+			if (minOccurrence > val) {
+				minOccurrence = val
 			}
-		}
+		})
 
 		const percentile = 100 - percentileThreshold;
 		// simple proportion
@@ -48,8 +50,8 @@ async function run() {
 		console.log("Threshold: ", threshold)
 		const framework = {};
 
-		Object.keys(occurrenceMap).filter((comboHash) => {
-			return occurrenceMap[comboHash] >= threshold
+		Array.from(occurrenceMap.keys()).filter((comboHash) => {
+			return occurrenceMap.get(comboHash) >= threshold
 		}).forEach((comboHash) => {
 			framework[comboHash] = `${topicName}-${randStr(classStringSize)}`
 		});
@@ -75,35 +77,6 @@ async function run() {
 	  return array;
 	}
 		
-	const updateOccurrenceMap = (occurrenceMap, styleCombinations) => {
-		// styleCombo => occurence(int)
-		console.log("getting occurrences", styleCombinations.length);
-		const comboHashFunc = (styleCombination) => {
-			// very important for maintaining order in the occurrence map search
-			return styleCombination.sort().join(";")
-		}
-
-		// temporary occurrence map
-		const styleCombinationsOccurrenceMap = {}
-		styleCombinations.map((combo) => comboHashFunc(combo)).forEach((comboHash) => {
-			if (comboHash in styleCombinationsOccurrenceMap) {
-				styleCombinationsOccurrenceMap[comboHash]++
-			} else {
-				styleCombinationsOccurrenceMap[comboHash] = 1
-			}
-		});
-
-		// merge the occurrence values
-		for (let comboHash of Object.keys(styleCombinationsOccurrenceMap)) {
-			if (comboHash in occurrenceMap) {
-				occurrenceMap[comboHash] += styleCombinationsOccurrenceMap[comboHash]
-			} else {
-				occurrenceMap[comboHash] = styleCombinationsOccurrenceMap[comboHash]
-			}
-		}
-
-		return occurrenceMap;
-	}
 	// `${topic1}-${topic2}-${randStr(5)}`
 
 	const combinations = (array) => {
@@ -129,15 +102,17 @@ async function run() {
 	}
 
 	const mergedFramework = {}
+	console.log("Topic Count:", Object.keys(topicMapping).length)
 	for (let topic in topicMapping) {
-		console.log("Getting css framework for topic", topic);
-
-		let occurrenceMap = {}
+		console.log("Getting css framework for topic:", topic);
+		occurrenceMap = new Map()
 
 		for (let [i, styleArray] of topicMapping[topic].entries()) {
-			if (styleLimit && i > styleLimit) {
+			if (styleLimit && styleLimit === i-1) {
+				console.log("Breaking early (memory efficient)")
 				break
 			}
+			// remove null values
 			if (styleArray[0].length === 0) {
 				styleArray.shift()
 			}
@@ -146,17 +121,41 @@ async function run() {
 			}
 			console.log(i, "of", topicMapping[topic].length)
 			console.log("Style count:", styleArray.length)
-			console.log("Occurrence map size", Object.keys(occurrenceMap).length, "\nMore than 1:", Object.keys(occurrenceMap).filter((k) => occurrenceMap[k] > 1).length)
-			
+			console.log("Occurrence map size", Array.from(occurrenceMap.keys()).length, "\nMore than 1:", Array.from(occurrenceMap.keys()).filter((k) => occurrenceMap.get(k) > 1).length)
+			// get all permutations of subarrays
 			const styleCombinations = combinations(shuffle(styleArray).slice(0,maxClassSize)).filter((combo) => {
 				return combo.length > 2;
 			});
 
-			occurrenceMap = updateOccurrenceMap(occurrenceMap, styleCombinations)
+			// styleCombo => occurence(int)
+			console.log("getting occurrences", styleCombinations.length);
+			const comboHashFunc = (styleCombination) => {
+				// very important for maintaining order in the occurrence map search
+				return styleCombination.sort().join(";")
+			}
+
+			// temporary occurrence map
+			const styleCombinationsOccurrenceMap = {}
+			styleCombinations.map((combo) => comboHashFunc(combo)).forEach((comboHash) => {
+				if (comboHash in styleCombinationsOccurrenceMap) {
+					styleCombinationsOccurrenceMap[comboHash]++
+				} else {
+					styleCombinationsOccurrenceMap[comboHash] = 1
+				}
+			});
+
+			// merge the occurrence values
+			for (let comboHash of Object.keys(styleCombinationsOccurrenceMap)) {
+				if (occurrenceMap.has(comboHash)) {
+					occurrenceMap.set(comboHash, occurrenceMap.get(comboHash) + styleCombinationsOccurrenceMap[comboHash])
+				} else {
+					occurrenceMap.set(comboHash, styleCombinationsOccurrenceMap[comboHash])
+				}
+			}
 		}
 
 		// comboHash => cssClass
-		const topicFramework = createFramework(topic, occurrenceMap)
+		const topicFramework = createFramework(topic)
 		for (let comboHash of Object.keys(topicFramework)) {
 			if (comboHash in mergedFramework) {
 				// append topic name to class name if it already exists
@@ -165,7 +164,7 @@ async function run() {
 				mergedFramework[comboHash] = topicFramework[comboHash]
 			}
 		}
-		fs.writeFileSync(`tmp-${topic}-framework.json`, JSON.stringify(createFramework(topic, occurrenceMap)))
+		fs.writeFileSync(`tmp-${topic}-framework.json`, JSON.stringify(createFramework(topic)))
 	}
 
 	let finalFramework = ""
